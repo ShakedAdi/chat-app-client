@@ -1,4 +1,3 @@
-import './App.css';
 import { Stack, Typography, Button, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 
