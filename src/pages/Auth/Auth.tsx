@@ -11,14 +11,13 @@ import {
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { MIN_PASSWORD_LEN, MIN_USERNAME_LEN } from '../../constants';
+import { AuthAction, type Errors } from './types';
 
-interface Errors {
-  username?: string;
-  password?: string;
-  confirm?: string;
+interface AuthProps {
+  action: AuthAction;
 }
 
-export default function SignUp() {
+export default function Auth({ action }: AuthProps) {
   const [values, setValues] = useState({
     username: '',
     password: '',
@@ -40,7 +39,7 @@ export default function SignUp() {
       next.username = `At least ${MIN_USERNAME_LEN} characters`;
     if (values.password.length < MIN_PASSWORD_LEN)
       next.password = `At least ${MIN_PASSWORD_LEN} characters`;
-    if (values.confirm !== values.password)
+    if (action === AuthAction.SIGNUP && values.confirm !== values.password)
       next.confirm = 'Passwords do not match';
     return next;
   };
@@ -54,7 +53,11 @@ export default function SignUp() {
     setSubmitting(true);
     setSubmitError('');
     try {
-      // TODO: POST to your NestJS auth endpoint here
+      if (action === AuthAction.SIGNUP) {
+        console.log('signup');
+      } else if (action === AuthAction.SIGNIN) {
+        console.log('signin');
+      }
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : 'Something went wrong',
@@ -75,7 +78,9 @@ export default function SignUp() {
             component="h1"
             sx={{ fontWeight: 700, mb: 1 }}
           >
-            Create your account
+            {action === AuthAction.SIGNUP
+              ? 'Create your account'
+              : 'Sign in to your account'}
           </Typography>
 
           {submitError && <Alert severity="error">{submitError}</Alert>}
@@ -102,17 +107,19 @@ export default function SignUp() {
             autoComplete="new-password"
             fullWidth
           />
-          <TextField
-            name="confirm"
-            label="Confirm password"
-            type="password"
-            value={values.confirm}
-            onChange={handleChange}
-            error={!!errors.confirm}
-            helperText={errors.confirm ?? ' '}
-            autoComplete="new-password"
-            fullWidth
-          />
+          {action === AuthAction.SIGNUP && (
+            <TextField
+              name="confirm"
+              label="Confirm password"
+              type="password"
+              value={values.confirm}
+              onChange={handleChange}
+              error={!!errors.confirm}
+              helperText={errors.confirm ?? ' '}
+              autoComplete="new-password"
+              fullWidth
+            />
+          )}
 
           <Button
             type="submit"
@@ -121,13 +128,16 @@ export default function SignUp() {
             loading={submitting}
             fullWidth
           >
-            Sign up
+            {action === AuthAction.SIGNUP ? 'Sign up' : 'Sign in'}
           </Button>
 
           <Typography variant="body2" sx={{ textAlign: 'center' }}>
             Already have an account?{' '}
-            <Link component={RouterLink} to="/signin">
-              Sign in
+            <Link
+              component={RouterLink}
+              to={action === AuthAction.SIGNUP ? '/signin' : '/signup'}
+            >
+              {action === AuthAction.SIGNUP ? 'Sign in' : 'Sign up'}
             </Link>
           </Typography>
         </Stack>

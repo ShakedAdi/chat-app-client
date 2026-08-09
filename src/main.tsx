@@ -4,8 +4,8 @@ import App from './App.tsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import SignUp from './pages/SignUp/SignUp.tsx';
-import SignIn from './pages/SignIn/SignIn.tsx';
+import Auth from './pages/Auth/Auth.tsx';
+import { AuthAction } from './pages/Auth/types.ts';
 
 /*
 #000000
@@ -38,8 +38,8 @@ const theme = createTheme({
 
 const router = createBrowserRouter([
   { path: '/', element: <App /> },
-  { path: '/signup', element: <SignUp /> },
-  { path: '/signin', element: <SignIn /> },
+  { path: '/signup', element: <Auth action={AuthAction.SIGNUP} /> },
+  { path: '/signin', element: <Auth action={AuthAction.SIGNIN} /> },
 ]);
 
 createRoot(document.getElementById('root')!).render(
