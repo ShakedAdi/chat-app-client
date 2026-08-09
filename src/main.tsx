@@ -6,6 +6,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Auth from './pages/Auth/Auth.tsx';
 import { AuthAction } from './pages/Auth/types.ts';
+import ChatsRoom from './pages/Chat/Chat.tsx';
 
 /*
 #000000
@@ -21,6 +22,7 @@ const theme = createTheme({
     primary: { main: '#500017' },
     text: { primary: '#000000', secondary: '#CB2957' },
     background: { default: '#ffffff', paper: '#eeeeee' },
+    divider: '#500017',
   },
   shape: { borderRadius: 12 },
   typography: {
@@ -40,6 +42,7 @@ const router = createBrowserRouter([
   { path: '/', element: <App /> },
   { path: '/signup', element: <Auth action={AuthAction.SIGNUP} /> },
   { path: '/signin', element: <Auth action={AuthAction.SIGNIN} /> },
+  { path: '/chat', element: <ChatsRoom /> },
 ]);
 
 createRoot(document.getElementById('root')!).render(
