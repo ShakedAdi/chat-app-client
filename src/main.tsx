@@ -4,6 +4,8 @@ import App from './App.tsx';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import SignUp from './pages/SignUp/SignUp.tsx';
+import SignIn from './pages/SignIn/SignIn.tsx';
 
 /*
 #000000
@@ -34,7 +36,11 @@ const theme = createTheme({
   },
 });
 
-const router = createBrowserRouter([{ path: '/', element: <App /> }]);
+const router = createBrowserRouter([
+  { path: '/', element: <App /> },
+  { path: '/signup', element: <SignUp /> },
+  { path: '/signin', element: <SignIn /> },
+]);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
