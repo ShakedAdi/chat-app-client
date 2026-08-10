@@ -5,6 +5,7 @@ import { type Room } from './types';
 import { useState } from 'react';
 import RoomRow from './components/RoomRow';
 import EmptyRooms from './components/EmptyRooms';
+import UsersSearch from './components/UsersSearch';
 
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
@@ -56,6 +57,7 @@ export default function ChatsRoom() {
         >
           {user?.username}
         </Typography>
+        <UsersSearch />
         <Box sx={{ flex: 1 }} />
         <Button onClick={handleSignOut} size="small">
           Log out
