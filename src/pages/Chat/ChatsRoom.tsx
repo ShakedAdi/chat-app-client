@@ -1,17 +1,24 @@
 import { Avatar, Box, Button, Divider, List, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { type Room } from './types';
-import { useState } from 'react';
+import { getRooms, type Room } from '../../api';
+import { useEffect, useState } from 'react';
 import RoomRow from './components/RoomRow';
 import EmptyRooms from './components/EmptyRooms';
 import UsersSearch from './components/UsersSearch';
 
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
-  const [rooms] = useState<Room[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function init() {
+      setRooms(await getRooms());
+    }
+    init();
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();

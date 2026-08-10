@@ -7,7 +7,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-import { RoomType, type Room } from '../types';
+import { RoomType, type Room } from '../../../api';
 
 interface RoomRowProps {
   room: Room;
