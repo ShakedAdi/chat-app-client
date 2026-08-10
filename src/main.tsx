@@ -7,6 +7,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Auth from './pages/Auth/Auth.tsx';
 import { AuthAction } from './pages/Auth/types.ts';
 import ChatsRoom from './pages/Chat/ChatsRoom.tsx';
+import NoRoomSelected from './pages/Chat/components/NoRoomSelected.tsx';
+import RoomView from './pages/Chat/components/RoomView.tsx';
 import AuthProvider from './context/AuthProvider.tsx';
 import RequireAuth from './components/RequireAuth.tsx';
 
@@ -46,7 +48,16 @@ const router = createBrowserRouter([
   { path: '/signin', element: <Auth action={AuthAction.SIGNIN} /> },
   {
     element: <RequireAuth />,
-    children: [{ path: '/chat', element: <ChatsRoom /> }],
+    children: [
+      {
+        path: '/chat',
+        element: <ChatsRoom />,
+        children: [
+          { index: true, element: <NoRoomSelected /> },
+          { path: ':roomId', element: <RoomView /> },
+        ],
+      },
+    ],
   },
 ]);
 

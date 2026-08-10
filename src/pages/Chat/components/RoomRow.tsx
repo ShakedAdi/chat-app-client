@@ -7,27 +7,23 @@ import {
 import { alpha } from '@mui/material/styles';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
+import { Link as RouterLink } from 'react-router-dom';
 import { RoomType, type Room } from '../../../api';
 
 interface RoomRowProps {
   room: Room;
   selected?: boolean;
-  onSelect?: (room: Room) => void;
 }
 
-export default function RoomRow({
-  room,
-  selected = false,
-  onSelect,
-}: RoomRowProps) {
+export default function RoomRow({ room, selected = false }: RoomRowProps) {
   const isGroup = room.type === RoomType.GROUP;
   const label = room.name ?? (isGroup ? 'Unnamed group' : 'Direct message');
 
   return (
     <ListItemButton
-      component="li"
+      component={RouterLink}
+      to={`/chat/${room.id}`}
       selected={selected}
-      onClick={() => onSelect?.(room)}
       sx={{
         borderRadius: 1,
         gap: 1.5,

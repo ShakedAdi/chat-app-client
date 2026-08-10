@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import { useNavigate } from 'react-router-dom';
 import {
   createDirect,
   searchUsers,
@@ -38,6 +39,7 @@ export default function UsersSearch({
   const [pendingUsername, setPendingUsername] = useState<string | null>(null);
   const [error, setError] = useState('');
   const { user: me } = useAuth();
+  const navigate = useNavigate();
 
   const term = input.trim();
   const open = term.length >= MIN_USER_SEARCH_LEN;
@@ -68,7 +70,6 @@ export default function UsersSearch({
   }, [term]);
 
   const handleMessage = async (event: React.MouseEvent, user: UserSummary) => {
-    // The row itself is clickable; don't fire both handlers.
     event.stopPropagation();
 
     setPendingUsername(user.username);
@@ -77,6 +78,7 @@ export default function UsersSearch({
       const room = await createDirect(user.username);
       onDirectCreated?.(room, user);
       setInput('');
+      navigate(`/chat/${room.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not open the chat');
     } finally {

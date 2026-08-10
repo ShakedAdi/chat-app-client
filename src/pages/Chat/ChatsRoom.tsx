@@ -1,8 +1,8 @@
 import { Avatar, Box, Button, Divider, List, Typography } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getRooms, type Room } from '../../api';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RoomRow from './components/RoomRow';
 import EmptyRooms from './components/EmptyRooms';
 import UsersSearch from './components/UsersSearch';
@@ -10,14 +10,24 @@ import UsersSearch from './components/UsersSearch';
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const { roomId: selectedRoomId } = useParams();
   const navigate = useNavigate();
 
+  const refreshRooms = useCallback(async () => {
+    setRooms(await getRooms());
+  }, []);
+
   useEffect(() => {
-    async function init() {
-      setRooms(await getRooms());
-    }
-    init();
+    let cancelled = false;
+
+    void (async () => {
+      const next = await getRooms();
+      if (!cancelled) setRooms(next);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSignOut = async () => {
@@ -64,7 +74,7 @@ export default function ChatsRoom() {
         >
           {user?.username}
         </Typography>
-        <UsersSearch />
+        <UsersSearch onDirectCreated={refreshRooms} />
         <Box sx={{ flex: 1 }} />
         <Button onClick={handleSignOut} size="small">
           Log out
@@ -93,7 +103,6 @@ export default function ChatsRoom() {
                 key={room.id}
                 room={room}
                 selected={room.id === selectedRoomId}
-                onSelect={(selected) => setSelectedRoomId(selected.id)}
               />
             ))}
           </List>
@@ -107,11 +116,13 @@ export default function ChatsRoom() {
         sx={{
           gridArea: 'main',
           bgcolor: 'background.paper',
-          overflowY: 'auto',
-          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
-        {/* messages go here */}
+        <Outlet />
       </Box>
     </Box>
   );
