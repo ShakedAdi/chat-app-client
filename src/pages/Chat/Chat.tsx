@@ -1,9 +1,15 @@
-import { Avatar, Box, Button, Divider, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Button, Divider, List, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { type Room } from './types';
+import { useState } from 'react';
+import RoomRow from './components/RoomRow';
+import EmptyRooms from './components/EmptyRooms';
 
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
+  const [rooms] = useState<Room[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -70,9 +76,21 @@ export default function ChatsRoom() {
         <Typography variant="overline" color="text.secondary">
           Rooms
         </Typography>
-        <Stack spacing={1} sx={{ mt: 1 }}>
-          {/* room list goes here */}
-        </Stack>
+
+        {rooms.length > 0 ? (
+          <List disablePadding sx={{ mt: 1 }}>
+            {rooms.map((room) => (
+              <RoomRow
+                key={room.id}
+                room={room}
+                selected={room.id === selectedRoomId}
+                onSelect={(selected) => setSelectedRoomId(selected.id)}
+              />
+            ))}
+          </List>
+        ) : (
+          <EmptyRooms />
+        )}
       </Box>
 
       <Box
