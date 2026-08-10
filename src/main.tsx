@@ -6,7 +6,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Auth from './pages/Auth/Auth.tsx';
 import { AuthAction } from './pages/Auth/types.ts';
-import ChatsRoom from './pages/Chat/Chat.tsx';
+import ChatsRoom from './pages/Chat/ChatsRoom.tsx';
 import AuthProvider from './context/AuthProvider.tsx';
 import RequireAuth from './components/RequireAuth.tsx';
 
