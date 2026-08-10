@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   CircularProgress,
+  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -9,20 +10,34 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { searchUsers, type UserSummary } from '../../../api';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import {
+  createDirect,
+  searchUsers,
+  type CreateDmResponse,
+  type UserSummary,
+} from '../../../api';
 import {
   MIN_USER_SEARCH_LEN,
   USER_SEARCH_DEBOUNCE_MS,
 } from '../../../constants';
+import { useAuth } from '../../../context/AuthContext';
 
 interface UsersSearchProps {
   onSelect?: (user: UserSummary) => void;
+  onDirectCreated?: (room: CreateDmResponse, user: UserSummary) => void;
 }
 
-export default function UsersSearch({ onSelect }: UsersSearchProps) {
+export default function UsersSearch({
+  onSelect,
+  onDirectCreated,
+}: UsersSearchProps) {
   const [input, setInput] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pendingUsername, setPendingUsername] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const { user: me } = useAuth();
 
   const term = input.trim();
   const open = term.length >= MIN_USER_SEARCH_LEN;
@@ -52,6 +67,23 @@ export default function UsersSearch({ onSelect }: UsersSearchProps) {
     };
   }, [term]);
 
+  const handleMessage = async (event: React.MouseEvent, user: UserSummary) => {
+    // The row itself is clickable; don't fire both handlers.
+    event.stopPropagation();
+
+    setPendingUsername(user.username);
+    setError('');
+    try {
+      const room = await createDirect(user.username);
+      onDirectCreated?.(room, user);
+      setInput('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open the chat');
+    } finally {
+      setPendingUsername(null);
+    }
+  };
+
   return (
     <Box sx={{ position: 'relative', width: { xs: 160, sm: 240 } }}>
       <TextField
@@ -59,7 +91,10 @@ export default function UsersSearch({ onSelect }: UsersSearchProps) {
         fullWidth
         placeholder="Search users"
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => {
+          setInput(e.target.value);
+          setError('');
+        }}
       />
 
       {open && (
@@ -76,7 +111,11 @@ export default function UsersSearch({ onSelect }: UsersSearchProps) {
             zIndex: 10,
           }}
         >
-          {loading && users.length === 0 ? (
+          {error ? (
+            <Typography variant="body2" color="error" sx={{ px: 2, py: 1.5 }}>
+              {error}
+            </Typography>
+          ) : loading && users.length === 0 ? (
             <Box sx={{ display: 'grid', placeItems: 'center', py: 2 }}>
               <CircularProgress size={20} />
             </Box>
@@ -90,18 +129,37 @@ export default function UsersSearch({ onSelect }: UsersSearchProps) {
             </Typography>
           ) : (
             <List disablePadding>
-              {users.map((user) => (
-                <ListItem
-                  key={user.username}
-                  component="li"
-                  onClick={() => onSelect?.(user)}
-                >
-                  <ListItemText
-                    primary={user.username}
-                    slotProps={{ primary: { noWrap: true } }}
-                  />
-                </ListItem>
-              ))}
+              {users.map(
+                (user) =>
+                  me?.username.toLowerCase() !==
+                    user.username.toLowerCase() && (
+                    <ListItem
+                      key={user.username}
+                      component="li"
+                      onClick={() => onSelect?.(user)}
+                      secondaryAction={
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          aria-label={`Message ${user.username}`}
+                          disabled={pendingUsername !== null}
+                          onClick={(event) => void handleMessage(event, user)}
+                        >
+                          {pendingUsername === user.username ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <ChatBubbleOutlineIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      }
+                    >
+                      <ListItemText
+                        primary={user.username}
+                        slotProps={{ primary: { noWrap: true } }}
+                      />
+                    </ListItem>
+                  ),
+              )}
             </List>
           )}
         </Paper>
