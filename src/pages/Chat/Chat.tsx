@@ -1,7 +1,16 @@
-import { Box, Typography, Stack, Button } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Avatar, Box, Button, Divider, Stack, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ChatsRoom() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/', { replace: true });
+  };
+
   return (
     <Box
       sx={{
@@ -32,8 +41,17 @@ export default function ChatsRoom() {
         <Typography variant="h6" component="h1" sx={{ fontWeight: 700 }}>
           ChatApp
         </Typography>
+        <Divider orientation="vertical" flexItem sx={{ my: 1.5 }} />
+
+        <Avatar sx={{ width: 32, height: 32 }} />
+        <Typography
+          component="h3"
+          sx={{ fontWeight: 700, color: 'text.secondary' }}
+        >
+          {user?.username}
+        </Typography>
         <Box sx={{ flex: 1 }} />
-        <Button component={RouterLink} to="/" size="small">
+        <Button onClick={handleSignOut} size="small">
           Log out
         </Button>
       </Box>

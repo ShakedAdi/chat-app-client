@@ -7,6 +7,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Auth from './pages/Auth/Auth.tsx';
 import { AuthAction } from './pages/Auth/types.ts';
 import ChatsRoom from './pages/Chat/Chat.tsx';
+import AuthProvider from './context/AuthProvider.tsx';
+import RequireAuth from './components/RequireAuth.tsx';
 
 /*
 #000000
@@ -42,14 +44,19 @@ const router = createBrowserRouter([
   { path: '/', element: <App /> },
   { path: '/signup', element: <Auth action={AuthAction.SIGNUP} /> },
   { path: '/signin', element: <Auth action={AuthAction.SIGNIN} /> },
-  { path: '/chat', element: <ChatsRoom /> },
+  {
+    element: <RequireAuth />,
+    children: [{ path: '/chat', element: <ChatsRoom /> }],
+  },
 ]);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 );

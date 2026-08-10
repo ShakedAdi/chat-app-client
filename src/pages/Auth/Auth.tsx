@@ -9,8 +9,15 @@ import {
   Alert,
   Link,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { MIN_PASSWORD_LEN, MIN_USERNAME_LEN } from '../../constants';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import {
+  MAX_USERNAME_LEN,
+  MIN_PASSWORD_LEN,
+  MIN_USERNAME_LEN,
+  USERNAME_PATTERN,
+} from '../../constants';
+import { signIn, signUp } from '../../api';
 import { AuthAction, type Errors } from './types';
 
 interface AuthProps {
@@ -18,6 +25,8 @@ interface AuthProps {
 }
 
 export default function Auth({ action }: AuthProps) {
+  const navigate = useNavigate();
+  const { refresh } = useAuth();
   const [values, setValues] = useState({
     username: '',
     password: '',
@@ -35,8 +44,15 @@ export default function Auth({ action }: AuthProps) {
 
   const getErrors = (): Errors => {
     const next: Errors = {};
-    if (values.username.trim().length < MIN_USERNAME_LEN)
+    const username = values.username.trim();
+
+    if (username.length < MIN_USERNAME_LEN)
       next.username = `At least ${MIN_USERNAME_LEN} characters`;
+    else if (username.length > MAX_USERNAME_LEN)
+      next.username = `At most ${MAX_USERNAME_LEN} characters`;
+    else if (!USERNAME_PATTERN.test(username))
+      next.username = 'Letters, numbers and underscores only';
+
     if (values.password.length < MIN_PASSWORD_LEN)
       next.password = `At least ${MIN_PASSWORD_LEN} characters`;
     if (action === AuthAction.SIGNUP && values.confirm !== values.password)
@@ -53,11 +69,20 @@ export default function Auth({ action }: AuthProps) {
     setSubmitting(true);
     setSubmitError('');
     try {
+      const payload = {
+        username: values.username.trim(),
+        password: values.password,
+      };
+
       if (action === AuthAction.SIGNUP) {
-        console.log('signup');
-      } else if (action === AuthAction.SIGNIN) {
-        console.log('signin');
+        await signUp(payload);
+      } else {
+        await signIn(payload);
       }
+
+      await refresh();
+
+      navigate('/chat', { replace: true });
     } catch (err) {
       setSubmitError(
         err instanceof Error ? err.message : 'Something went wrong',
@@ -104,7 +129,9 @@ export default function Auth({ action }: AuthProps) {
             onChange={handleChange}
             error={!!errors.password}
             helperText={errors.password ?? ' '}
-            autoComplete="new-password"
+            autoComplete={
+              action === AuthAction.SIGNUP ? 'new-password' : 'current-password'
+            }
             fullWidth
           />
           {action === AuthAction.SIGNUP && (
@@ -132,7 +159,9 @@ export default function Auth({ action }: AuthProps) {
           </Button>
 
           <Typography variant="body2" sx={{ textAlign: 'center' }}>
-            Already have an account?{' '}
+            {action === AuthAction.SIGNUP
+              ? 'Already have an account? '
+              : "Don't have an account? "}
             <Link
               component={RouterLink}
               to={action === AuthAction.SIGNUP ? '/signin' : '/signup'}
