@@ -156,7 +156,13 @@ export default function UsersSearch({
                       }
                     >
                       <ListItemText
-                        primary={user.username}
+                        primary={user.displayName}
+                        slotProps={{
+                          primary: { noWrap: true, sx: { fontWeight: 700 } },
+                        }}
+                      />
+                      <ListItemText
+                        primary={`@${user.username}`}
                         slotProps={{ primary: { noWrap: true } }}
                       />
                     </ListItem>
