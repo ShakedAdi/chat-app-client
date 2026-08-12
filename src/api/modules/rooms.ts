@@ -18,6 +18,11 @@ export interface CreateDmResponse {
   createdAt: string;
 }
 
+export interface CreateGroupResponse {
+  id: string;
+  createdAt: string;
+}
+
 export async function getRooms(): Promise<Room[]> {
   const { data } = await api.get<Room[]>('/rooms');
   return data;
@@ -29,5 +34,16 @@ export async function createDirect(
   const { data } = await api.post<CreateDmResponse>(
     `/rooms/dm/${encodeURIComponent(otherUsername)}`,
   );
+  return data;
+}
+
+export async function createGroup(
+  name: string,
+  members: string[],
+): Promise<CreateGroupResponse> {
+  const { data } = await api.post<CreateGroupResponse>('/rooms/group', {
+    name,
+    members,
+  });
   return data;
 }

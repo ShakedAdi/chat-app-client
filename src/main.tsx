@@ -24,6 +24,7 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: { main: '#500017' },
+    secondary: { main: '#CB2957', contrastText: '#ffffff' },
     text: { primary: '#000000', secondary: '#CB2957' },
     background: { default: '#ffffff', paper: '#eeeeee' },
     divider: '#500017',
