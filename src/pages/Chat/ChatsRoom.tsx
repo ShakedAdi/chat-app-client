@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, Divider, List, Typography } from '@mui/material';
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { Outlet, useMatch, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getRooms, type Room } from '../../api';
 import { useCallback, useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ import CreateGroup from './components/CreateGroup';
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const { roomId: selectedRoomId } = useParams();
+  const roomId = useMatch('/chat/:roomId')?.params.roomId;
   const navigate = useNavigate();
 
   const refreshRooms = useCallback(async () => {
@@ -104,7 +104,7 @@ export default function ChatsRoom() {
               <RoomRow
                 key={room.id}
                 room={room}
-                selected={room.id === selectedRoomId}
+                selected={room.id === roomId}
               />
             ))}
           </List>
