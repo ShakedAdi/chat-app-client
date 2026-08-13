@@ -1,4 +1,5 @@
 import api from '../client';
+import type { JwtPayload } from '../types';
 
 interface AuthRequest {
   username: string;
@@ -6,11 +7,6 @@ interface AuthRequest {
 }
 
 interface AuthResponse {
-  username: string;
-}
-
-export interface JwtPayload {
-  sub: string;
   username: string;
 }
 

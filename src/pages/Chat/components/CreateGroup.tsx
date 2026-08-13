@@ -25,7 +25,7 @@ import {
 import { useUserSearch } from '../../../hooks/useUserSearch';
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { createGroup } from '../../../api/modules/rooms';
+import { createGroup } from '../../../api';
 import { useNavigate } from 'react-router-dom';
 
 export default function CreateGroup() {

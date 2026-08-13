@@ -1,30 +1,20 @@
 import api from '../client';
-
-export const RoomType = {
-  DIRECT: 'DIRECT',
-  GROUP: 'GROUP',
-} as const;
-
-export type RoomType = (typeof RoomType)[keyof typeof RoomType];
-
-export interface Room {
-  id: string;
-  type: RoomType;
-  name: string;
-}
-
-export interface CreateDmResponse {
-  id: string;
-  createdAt: string;
-}
-
-export interface CreateGroupResponse {
-  id: string;
-  createdAt: string;
-}
+import type {
+  CreateDmResponse,
+  CreateGroupResponse,
+  RoomDetails,
+  Room,
+} from '../types';
 
 export async function getRooms(): Promise<Room[]> {
   const { data } = await api.get<Room[]>('/rooms');
+  return data;
+}
+
+export async function getRoomDetails(roomId: string): Promise<RoomDetails> {
+  const { data } = await api.get<RoomDetails>(
+    `/rooms/details/${encodeURIComponent(roomId)}`,
+  );
   return data;
 }
 
