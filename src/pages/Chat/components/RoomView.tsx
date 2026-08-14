@@ -24,15 +24,25 @@ import SendIcon from '@mui/icons-material/Send';
 import {
   getLastMessages,
   getRoomDetails,
+  MemberRole,
   type RoomDetails,
   RoomType,
   sendMessage,
   type Message,
+  addMember,
+  removeMember,
+  leaveGroup,
+  deleteGroup,
+  deleteDirect,
 } from '../../../api';
 import { useAuth } from '../../../context/AuthContext';
 import MessageBubble from './MessageBubble';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import LogoutIcon from '@mui/icons-material/Logout';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 
 export default function RoomView() {
   const { roomId } = useParams();
@@ -47,9 +57,17 @@ export default function RoomView() {
   const [sendError, setSendError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [openRoomDetails, setOpenRoomDetails] = useState<boolean>(false);
+  const [addingMember, setAddingMember] = useState(false);
+  const [memberDraft, setMemberDraft] = useState('');
+  const [addingBusy, setAddingBusy] = useState(false);
+  const [addMemberError, setAddMemberError] = useState('');
 
   const loading = loadedRoomId !== roomId;
   const isGroup = room?.type === RoomType.GROUP;
+  const isDirect = room?.type === RoomType.DIRECT;
+  const isAdmin =
+    room?.members.find((member) => member.userId === me?.sub)?.role ===
+    MemberRole.ADMIN;
 
   useEffect(() => {
     if (!roomId) return;
@@ -104,6 +122,35 @@ export default function RoomView() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleAddMember = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const username = memberDraft.trim();
+    if (!room || !username || addingBusy) return;
+
+    setAddingBusy(true);
+    setAddMemberError('');
+    try {
+      await addMember(room.id, username);
+      setRoom(await getRoomDetails(room.id));
+      setMemberDraft('');
+      setAddingMember(false);
+    } catch (err) {
+      setAddMemberError(
+        err instanceof Error ? err.message : 'Could not add member',
+      );
+    } finally {
+      setAddingBusy(false);
+    }
+  };
+
+  const closeRoomDetails = () => {
+    setOpenRoomDetails(false);
+    setAddingMember(false);
+    setMemberDraft('');
+    setAddMemberError('');
   };
 
   return (
@@ -204,7 +251,7 @@ export default function RoomView() {
       </Paper>
       <Dialog
         open={openRoomDetails}
-        onClose={() => setOpenRoomDetails(false)}
+        onClose={closeRoomDetails}
         fullWidth
         maxWidth="xs"
       >
@@ -233,6 +280,36 @@ export default function RoomView() {
 
         <DialogContent dividers>
           <Stack spacing={2}>
+            {addingMember && (
+              <Box
+                component="form"
+                onSubmit={(event) => void handleAddMember(event)}
+                sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+              >
+                <TextField
+                  autoFocus
+                  size="small"
+                  fullWidth
+                  label="Username"
+                  value={memberDraft}
+                  onChange={(event) => {
+                    setMemberDraft(event.target.value);
+                    setAddMemberError('');
+                  }}
+                  error={!!addMemberError}
+                  helperText={addMemberError}
+                  disabled={addingBusy}
+                />
+                <Button
+                  type="submit"
+                  size="small"
+                  disabled={addingBusy || memberDraft.trim().length === 0}
+                >
+                  {addingBusy ? <CircularProgress size={20} /> : 'Add'}
+                </Button>
+              </Box>
+            )}
+
             <List
               dense
               disablePadding
@@ -246,12 +323,31 @@ export default function RoomView() {
                     key={member.userId}
                     secondaryAction={
                       isGroup ? (
-                        <Typography
-                          variant="body1"
-                          sx={{ color: 'text.secondary' }}
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          sx={{ alignItems: 'center' }}
                         >
-                          {member.role}
-                        </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            {member.role}
+                          </Typography>
+                          {isAdmin && !isMe && (
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              color="error"
+                              aria-label={`Remove ${member.user.displayName}`}
+                              onClick={() =>
+                                removeMember(room.id, member.user.username)
+                              }
+                            >
+                              <PersonRemoveIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Stack>
                       ) : null
                     }
                     sx={{
@@ -299,8 +395,49 @@ export default function RoomView() {
           </Stack>
         </DialogContent>
 
-        <DialogActions>
-          <Button onClick={() => setOpenRoomDetails(false)}>Close</Button>
+        <DialogActions sx={{ px: 2, py: 1.5 }}>
+          <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
+            <Button size="small" onClick={closeRoomDetails}>
+              Close
+            </Button>
+            <Box sx={{ flex: 1 }} />
+            {isGroup && isAdmin && (
+              <Button
+                size="small"
+                aria-label={addingMember ? 'Cancel adding member' : 'Add member'}
+                sx={{ minWidth: 0, px: 1 }}
+                onClick={() => setAddingMember((open) => !open)}
+              >
+                <PersonAddIcon fontSize="small" />
+              </Button>
+            )}
+            {isGroup && (
+              <Button
+                size="small"
+                color="error"
+                aria-label="Leave group"
+                sx={{ minWidth: 0, px: 1 }}
+                onClick={() => leaveGroup(room.id)}
+              >
+                <LogoutIcon fontSize="small" />
+              </Button>
+            )}
+
+            {(isDirect || (isGroup && isAdmin)) && (
+              <Button
+                size="small"
+                color="error"
+                variant="outlined"
+                aria-label="Delete group"
+                sx={{ minWidth: 0, px: 1 }}
+                onClick={() =>
+                  isGroup ? deleteGroup(room.id) : deleteDirect(room.id)
+                }
+              >
+                <DeleteOutlinedIcon fontSize="small" />
+              </Button>
+            )}
+          </Stack>
         </DialogActions>
       </Dialog>
     </Box>

@@ -5,6 +5,11 @@ export {
   getRooms,
   getRoomDetails,
   createDirect,
+  deleteDirect,
   createGroup,
+  deleteGroup,
+  addMember,
+  removeMember,
+  leaveGroup,
 } from './modules/rooms';
 export { sendMessage, getLastMessages } from './modules/messages';
