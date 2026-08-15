@@ -72,19 +72,18 @@ export default function RoomView() {
     MemberRole.ADMIN;
 
   useEffect(() => {
-    console.log('socket.connected =', socket.connected);
     if (!roomId) return;
 
     let cancelled = false;
 
-    socket.on('connect', () => {
-      console.log('Connected');
-    });
-    socket.emit('joinRoom', roomId);
-    socket.on('onMessage', (data) => {
-      console.log('New message');
-      console.log(data);
-    });
+    const joinRoom = () => socket.emit('joinRoom', roomId);
+    const onMessage = (message: Message) => {
+      setMessages((prev) => [message, ...prev]);
+    };
+
+    if (socket.connected) joinRoom();
+    socket.on('connect', joinRoom);
+    socket.on('onMessage', onMessage);
 
     void (async () => {
       try {
@@ -108,11 +107,11 @@ export default function RoomView() {
 
     return () => {
       cancelled = true;
-      socket.off('connect');
-      socket.off('onMessage');
+      socket.off('connect', joinRoom);
+      socket.off('onMessage', onMessage);
       socket.emit('leaveRoom', roomId);
     };
-  }, [roomId]);
+  }, [roomId, socket]);
 
   const ordered = useMemo(() => [...messages].reverse(), [messages]);
 
@@ -131,7 +130,6 @@ export default function RoomView() {
     setSendError('');
     try {
       await sendMessage(roomId, text);
-      socket.emit('newMessage', { roomId, text });
       setDraft('');
     } catch (err) {
       setSendError(err instanceof Error ? err.message : 'Could not send');
