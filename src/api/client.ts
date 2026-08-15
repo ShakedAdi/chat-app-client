@@ -22,7 +22,7 @@ interface NestErrorBody {
 }
 
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.BACKEND_URL ?? 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:3000',
   timeout: Number(import.meta.env.VITE_RESPONSE_TIMEOUT) || 10000,
   withCredentials: true,
 });
