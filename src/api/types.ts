@@ -52,14 +52,12 @@ export interface RoomDetails {
   createdAt: string;
 }
 
-/** The system message emitted when a member is added or removed. */
 export interface SystemMessageResponse {
   id: string;
   createdAt: string;
 }
 
 export interface LeaveGroupResponse {
-  /** True when the last member left and the room was deleted with them. */
   roomDeleted: boolean;
 }
 
