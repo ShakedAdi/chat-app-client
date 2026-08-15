@@ -11,6 +11,7 @@ import NoRoomSelected from './pages/Chat/components/NoRoomSelected.tsx';
 import RoomView from './pages/Chat/components/RoomView.tsx';
 import AuthProvider from './context/AuthProvider.tsx';
 import RequireAuth from './components/RequireAuth.tsx';
+import WebsocketProvider from './context/WebsocketProvider.tsx';
 
 /*
 #000000
@@ -52,7 +53,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/chat',
-        element: <ChatsRoom />,
+        element: (
+          <WebsocketProvider>
+            <ChatsRoom />
+          </WebsocketProvider>
+        ),
         children: [
           { index: true, element: <NoRoomSelected /> },
           { path: ':roomId', element: <RoomView /> },

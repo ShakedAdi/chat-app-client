@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Avatar,
@@ -43,6 +43,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import { WebsocketContext } from '../../../context/WebsocketContext';
 
 export default function RoomView() {
   const { roomId } = useParams();
@@ -61,6 +62,7 @@ export default function RoomView() {
   const [memberDraft, setMemberDraft] = useState('');
   const [addingBusy, setAddingBusy] = useState(false);
   const [addMemberError, setAddMemberError] = useState('');
+  const socket = useContext(WebsocketContext);
 
   const loading = loadedRoomId !== roomId;
   const isGroup = room?.type === RoomType.GROUP;
@@ -70,9 +72,19 @@ export default function RoomView() {
     MemberRole.ADMIN;
 
   useEffect(() => {
+    console.log('socket.connected =', socket.connected);
     if (!roomId) return;
 
     let cancelled = false;
+
+    socket.on('connect', () => {
+      console.log('Connected');
+    });
+    socket.emit('joinRoom', roomId);
+    socket.on('onMessage', (data) => {
+      console.log('New message');
+      console.log(data);
+    });
 
     void (async () => {
       try {
@@ -96,6 +108,9 @@ export default function RoomView() {
 
     return () => {
       cancelled = true;
+      socket.off('connect');
+      socket.off('onMessage');
+      socket.emit('leaveRoom', roomId);
     };
   }, [roomId]);
 
@@ -116,6 +131,7 @@ export default function RoomView() {
     setSendError('');
     try {
       await sendMessage(roomId, text);
+      socket.emit('newMessage', { roomId, text });
       setDraft('');
     } catch (err) {
       setSendError(err instanceof Error ? err.message : 'Could not send');
@@ -404,7 +420,9 @@ export default function RoomView() {
             {isGroup && isAdmin && (
               <Button
                 size="small"
-                aria-label={addingMember ? 'Cancel adding member' : 'Add member'}
+                aria-label={
+                  addingMember ? 'Cancel adding member' : 'Add member'
+                }
                 sx={{ minWidth: 0, px: 1 }}
                 onClick={() => setAddingMember((open) => !open)}
               >
