@@ -1,20 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
 
-export class ApiError extends Error {
-  private status?: number;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.status = status;
-    this.name = 'ApiError';
-  }
-
-  getStatus() {
-    return this.status;
-  }
-}
-
 interface NestErrorBody {
   message?: string | string[];
   statusCode?: number;
@@ -35,10 +21,10 @@ api.interceptors.response.use(
     }
 
     if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      return Promise.reject(new ApiError('Server took too long to respond.'));
+      return Promise.reject(new Error('Server took too long to respond.'));
     }
     if (error.code === 'ERR_NETWORK') {
-      return Promise.reject(new ApiError('Cannot reach the server.'));
+      return Promise.reject(new Error('Cannot reach the server.'));
     }
 
     const data = error.response?.data;
@@ -46,7 +32,7 @@ api.interceptors.response.use(
       ? data.message.join(', ')
       : (data?.message ?? error.message);
 
-    return Promise.reject(new ApiError(message, error.response?.status));
+    return Promise.reject(new Error(message));
   },
 );
 
