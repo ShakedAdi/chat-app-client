@@ -80,7 +80,7 @@ export default function ChatsRoom() {
           {user?.username}
         </Typography>
         <UsersSearch onDirectCreated={refreshRooms} />
-        <CreateGroup />
+        <CreateGroup onGroupCreated={refreshRooms} />
         <Box sx={{ flex: 1 }} />
         <Button onClick={handleSignOut} size="small">
           Log out

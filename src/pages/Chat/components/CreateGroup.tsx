@@ -25,10 +25,14 @@ import {
 import { useUserSearch } from '../../../hooks/useUserSearch';
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
-import { createGroup } from '../../../api';
+import { createGroup, type CreateGroupResponse } from '../../../api';
 import { useNavigate } from 'react-router-dom';
 
-export default function CreateGroup() {
+interface CreateGroupProps {
+  onGroupCreated?: (room: CreateGroupResponse) => void | Promise<void>;
+}
+
+export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
   const { input, setInput, enabled, users, loading } = useUserSearch();
   const [members, setMembers] = useState<string[]>([]);
   const [name, setName] = useState<string>('');
@@ -55,6 +59,7 @@ export default function CreateGroup() {
     setError('');
     try {
       const room = await createGroup(name.trim(), members);
+      await onGroupCreated?.(room);
       setOpen(false);
       navigate(`/chat/${room.id}`);
     } catch (err) {
