@@ -65,6 +65,9 @@ export default function CreateGroup({ onGroupCreated }: CreateGroupProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create group');
     } finally {
+      setInput('');
+      setMembers([]);
+      setName('');
       setSubmitting(false);
     }
   };
