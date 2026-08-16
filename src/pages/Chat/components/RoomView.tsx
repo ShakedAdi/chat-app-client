@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import {
   Avatar,
   Box,
@@ -44,6 +44,7 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { WebsocketContext } from '../../../context/WebsocketContext';
+import type { ChatOutletContext } from '../ChatsRoom';
 
 export default function RoomView() {
   const { roomId } = useParams();
@@ -62,7 +63,11 @@ export default function RoomView() {
   const [memberDraft, setMemberDraft] = useState('');
   const [addingBusy, setAddingBusy] = useState(false);
   const [addMemberError, setAddMemberError] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState('');
   const socket = useContext(WebsocketContext);
+  const { refreshRooms } = useOutletContext<ChatOutletContext>();
+  const navigate = useNavigate();
 
   const loading = loadedRoomId !== roomId;
   const isGroup = room?.type === RoomType.GROUP;
@@ -165,7 +170,59 @@ export default function RoomView() {
     setAddingMember(false);
     setMemberDraft('');
     setAddMemberError('');
+    setActionError('');
   };
+
+  const runRoomAction = async (
+    action: (current: RoomDetails) => Promise<void>,
+    fallbackError: string,
+  ) => {
+    if (!room || actionBusy) return;
+
+    setActionBusy(true);
+    setActionError('');
+    try {
+      await action(room);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : fallbackError);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  // The room is gone for us now: refresh the sidebar and get off its route.
+  const dropRoom = async () => {
+    closeRoomDetails();
+    await refreshRooms();
+    navigate('/chat', { replace: true });
+  };
+
+  const handleRemoveMember = (username: string) =>
+    runRoomAction(async (current) => {
+      await removeMember(current.id, username);
+      setRoom(await getRoomDetails(current.id));
+    }, 'Could not remove member');
+
+  const handleLeaveGroup = () =>
+    runRoomAction(async (current) => {
+      await leaveGroup(current.id);
+      await dropRoom();
+    }, 'Could not leave the group');
+
+  const handleDeleteRoom = () =>
+    runRoomAction(async (current) => {
+      if (isGroup) {
+        await deleteGroup(current.id);
+      } else {
+        // The direct route is keyed by the other participant, not the room id.
+        const other = current.members.find(
+          (member) => member.userId !== me?.sub,
+        );
+        if (!other) throw new Error('Could not find the other participant');
+        await deleteDirect(other.user.username);
+      }
+      await dropRoom();
+    }, 'Could not delete the chat');
 
   return (
     <Box
@@ -354,8 +411,9 @@ export default function RoomView() {
                               size="small"
                               color="error"
                               aria-label={`Remove ${member.user.displayName}`}
+                              disabled={actionBusy}
                               onClick={() =>
-                                removeMember(room.id, member.user.username)
+                                void handleRemoveMember(member.user.username)
                               }
                             >
                               <PersonRemoveIcon fontSize="small" />
@@ -406,6 +464,12 @@ export default function RoomView() {
                 );
               })}
             </List>
+
+            {actionError && (
+              <Typography variant="body2" color="error">
+                {actionError}
+              </Typography>
+            )}
           </Stack>
         </DialogContent>
 
@@ -433,7 +497,8 @@ export default function RoomView() {
                 color="error"
                 aria-label="Leave group"
                 sx={{ minWidth: 0, px: 1 }}
-                onClick={() => leaveGroup(room.id)}
+                disabled={actionBusy}
+                onClick={() => void handleLeaveGroup()}
               >
                 <LogoutIcon fontSize="small" />
               </Button>
@@ -444,11 +509,10 @@ export default function RoomView() {
                 size="small"
                 color="error"
                 variant="outlined"
-                aria-label="Delete group"
+                aria-label={isGroup ? 'Delete group' : 'Delete chat'}
                 sx={{ minWidth: 0, px: 1 }}
-                onClick={() =>
-                  isGroup ? deleteGroup(room.id) : deleteDirect(room.id)
-                }
+                disabled={actionBusy}
+                onClick={() => void handleDeleteRoom()}
               >
                 <DeleteOutlinedIcon fontSize="small" />
               </Button>

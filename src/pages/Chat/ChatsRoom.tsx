@@ -8,6 +8,10 @@ import EmptyRooms from './components/EmptyRooms';
 import UsersSearch from './components/UsersSearch';
 import CreateGroup from './components/CreateGroup';
 
+export interface ChatOutletContext {
+  refreshRooms: () => Promise<void>;
+}
+
 export default function ChatsRoom() {
   const { user, signOut } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -124,7 +128,7 @@ export default function ChatsRoom() {
           overflow: 'hidden',
         }}
       >
-        <Outlet />
+        <Outlet context={{ refreshRooms } satisfies ChatOutletContext} />
       </Box>
     </Box>
   );
